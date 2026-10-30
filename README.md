@@ -1,35 +1,41 @@
-# LxW · Once Human — Android app
+# LxW — Android app
 
-Hybrid (Capacitor 8) companion app for **lethalxwolf.live/once-human**.
-Unofficial fan app — Once Human and related content are property of Starry Studio / NetEase Games.
+Hybrid (Capacitor 8) companion app for **lethalxwolf.live**, covering **Once Human** and **Aniimo**.
+Unofficial fan app — Once Human and related content are property of Starry Studio / NetEase Games;
+Aniimo and related content are property of their respective owners.
 
 ## What's in the app
 
-| Section | Where the content comes from |
-|---|---|
-| **Event Timers** — Loot Reset, Tech Scan Loot, Securement Units, Daily Deviation Spawns, Miss Memory, and the Gravity Abyss group (Gravity Event, Aerial Hunt). Each has an **Alert** switch. | Built-in schedule, overridable from `once-human/data/app-config.json` |
-| **BP & Crates** — current battle pass and every active loot crate, with countdowns and optional "ending soon" alerts | The same `once-human/data/battlepass.json` and `lootcrates.json` your admin panel already writes |
-| **Servers** — Normal / Visional opening countdowns per scenario | Built-in (copied from `SERVER_SCHEDULE`), overridable from `app-config.json` |
-| **Tools** — Builds, Deviation Library, Interactive Map, Fusion Pod, Tech Invention, Gravity Abyss guide | Your live pages, shown inside the app |
-| **☰ menu** (top left) — jumps to every section and tool | — |
+A **Once Human / Aniimo** switch sits under the top bar (and in the ☰ menu). Each game has its own bottom tabs:
 
-Bottom tabs: **Timers · Tools · Servers · BP & Crates**.
+| Once Human | Aniimo |
+|---|---|
+| **Timers**: Loot Reset, Tech Scan Loot, Securement Units, Daily Deviation Spawns, Miss Memory, Gravity Abyss (Gravity Event, Aerial Hunt) | **Timers**: Daily Reset, Weekly Reset (with what each resets), Weather Cycle |
+| **Tools**: Builds, Deviation Library, Interactive Map, Fusion Pod, Tech Invention, Gravity Abyss guide | **Tools**: AniiLog, Egg Heist Info Broker, Combo Codes, Team Comps, Tier List, Bosses, Items, Interactive Map, Twining & Evolution, Homeland & RV, Beginner Guide, Check-in List, Patch Notes |
+| **Servers**: Normal / Visional opening countdowns | **Season**: current season and banner |
+| **BP & Crates**: battle pass and every active loot crate (from the site's JSON) | **Combo Codes**: the community combo-code board |
+
+The **☰ menu** has everything above plus, under **More**: **Creators** (Wolf_Poe and LethalJoker with all their
+socials, plus the Discord), **RavensJest Discord Bot**, **Support Us** (the same Stripe links as the website's
+Support Us button), each game's full website, and **Alert Settings & About**.
+
+Website pages open inside the app. Links to other sites (socials, Stripe, Discord login) open in the phone's browser
+or app. Interactive maps hide the bottom tabs to give the map the whole screen.
 
 ## Keeping the app up to date from the website
 
 You don't need to ship an app update for any of these:
 
-- **Tool pages** (builds, deviation library, map, fusion pod, …): they load live, so edit the site as usual.
-- **Battle pass / loot crates**: update them in your admin panel as usual. The app reads the same JSON files.
-- **Timers, server schedule, tool list, announcement banner**: upload
-  `website-addition/app-config.json` to **`once-human/data/app-config.json`** on the site, then edit it there.
+- **Website pages** (all tools, guides, maps, Combo Codes, RavensJest): they load live, so edit the site as usual.
+- **Once Human battle pass / loot crates**: update them in the admin panel as usual. The app reads the same JSON.
+- **Everything else** (timers, server schedule, tool lists, Aniimo season/banner, creators' links, support links,
+  announcement banners): see [`website-addition/README.md`](website-addition/README.md). Upload
+  `website-addition/app-config.json` to `once-human/data/app-config.json`, then edit it there.
   - Leave out any key you don't want to override (the app then uses its built-in value).
-  - Each list (`timers`, `tools`, `servers`) replaces the whole built-in list, so keep every entry in it.
-  - `announcement`: put any text in it to show a banner at the top of the Timers tab, or `""` to hide it.
-  - Timer fields (all UTC): `anchorUtc` = any one past start time, `periodHours` = how often it repeats,
-    `durationMin` = how long it's "ACTIVE" (optional), `kind: "event"` = says "starts" instead of "resets".
-  - Example: if a new Visional Wheel season replaces Gravity Abyss, edit the `gravity-abyss` group's title and
-    guideUrl, and change or replace its two timers.
+  - Each list replaces the whole built-in list, so keep every entry in it.
+  - Timer fields: `anchorUtc` = any one past start time (UTC), `periodHours` = how often it repeats,
+    `durationMin` = how long it's "ACTIVE" (optional), `kind` = `"event"` (says *starts*) or `"change"` (says *changes*),
+    `localAnchorHour` = repeat on the phone's own clock instead of UTC (used by Aniimo's weather cycle, matching the site).
 
 The app re-checks the website every time it's opened or brought back to the foreground.
 
@@ -56,6 +62,9 @@ cd android && ./gradlew assembleDebug
 ```
 
 The APK lands in `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+The app ID is `live.lethalxwolf.app`. (Test builds before v1.1.0 used `live.lethalxwolf.oncehuman`, so uninstall
+that one; both can't share alerts or settings.)
 Or open the `android/` folder in Android Studio and use **Build → Build APK(s)**.
 
 **GitHub:** push this folder to a GitHub repo and `.github/workflows/build-apk.yml` builds the APK on every
@@ -68,18 +77,22 @@ push to `main`. Download it from the run's **Artifacts**.
 2. Bump `versionCode` / `versionName` in `android/app/build.gradle` for every release.
 3. Build an **.aab** (App Bundle). Play doesn't accept debug APKs.
 4. Play's policy declarations: the app uses `SCHEDULE_EXACT_ALARM` for timed alerts, and it's an unofficial
-   fan app, so keep the disclaimer and avoid official Once Human artwork in the store listing.
+   fan app, so keep the disclaimer and avoid official game artwork in the store listing.
+5. **Support Us** sends people to Stripe in the browser. Read Google Play's Payments policy before
+   submitting: tips and memberships paid outside Google Play billing can get an app rejected, depending on what
+   supporters receive. If review flags it, the simplest fix is to link to the website's Support page instead of
+   directly to Stripe.
 
 ## Project layout
 
 ```
 www/                 the app UI (plain HTML/CSS/JS)
-  js/config.js       built-in timers, tools, server schedule (defaults)
+  js/config.js       built-in games, timers, tools, servers, creators, support links (defaults)
   js/schedule.js     timer / server-opening math
   js/notify.js       Android notifications
   js/app.js          navigation, views, website loading
 android/             native Android project (generated by Capacitor, icons customised)
-website-addition/    app-config.json to upload to the site
+website-addition/    app-config.json + map fixes to add to the site (see its README)
 tools/make_icons.py  regenerates launcher / splash / notification icons from the logo
 test/                timer tests
 ```

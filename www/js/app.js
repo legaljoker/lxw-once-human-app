@@ -1,19 +1,26 @@
 // ============================================================
-//  LxW App — shell: navigation, timers, season, servers, tools
+//  LxW App — shell: game switch, navigation, timers, season,
+//  servers, tools, creators, support
 // ============================================================
 
 const CONFIG_CACHE_KEY = 'lxw_remote_config';
 const SEASON_CACHE_KEY = 'lxw_season';
+const GAME_KEY         = 'lxw_game';
 
 const cap       = window.Capacitor;
 const AppPlugin = Notifier.native ? (cap.Plugins.App || cap.registerPlugin('App')) : null;
 const Browser   = Notifier.native ? (cap.Plugins.Browser || cap.registerPlugin('Browser')) : null;
 
 let config = loadCachedConfig();
-let season = loadCached(SEASON_CACHE_KEY) || { battlepass: null, crates: [] };
+let gameId = loadGameId();
+// Once Human's battle pass / crates come from the site's JSON; cached for offline starts
+let ohSeason = loadCached(SEASON_CACHE_KEY) || { battlepass: null, crates: [] };
+let ohSeasonErrored = false;
 let currentView = 'timers';
 let lastNativeView = 'timers';
+let activeTab = 'timers';
 
+const game = () => config.games[gameId];
 const $  = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -28,9 +35,19 @@ function saveCached(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
 }
 
-// Remote values win over built-in defaults, key by key
+// Remote values win over built-in defaults: top-level keys replace, and each
+// game's keys replace that game's built-in keys one by one.
 function loadCachedConfig() {
-  return { ...DEFAULT_CONFIG, ...(loadCached(CONFIG_CACHE_KEY) || {}) };
+  const remote = loadCached(CONFIG_CACHE_KEY) || {};
+  const games = {};
+  for (const [id, g] of Object.entries(DEFAULT_CONFIG.games)) games[id] = { ...g, ...((remote.games || {})[id] || {}) };
+  return { ...DEFAULT_CONFIG, ...remote, games };
+}
+
+function loadGameId() {
+  let id = null;
+  try { id = localStorage.getItem(GAME_KEY); } catch (_) {}
+  return id && DEFAULT_CONFIG.games[id] ? id : 'oncehuman';
 }
 
 async function fetchJson(url) {
@@ -42,24 +59,63 @@ async function fetchJson(url) {
   return res.json();
 }
 
-function imageUrl(path) {
-  if (!path) return '';
-  return /^https?:/.test(path) ? path : config.imageBase + path.replace(/^\//, '');
+// Every game's timers, tagged so alerts keep working whichever game is showing
+function allTimers() {
+  return Object.entries(config.games).flatMap(([id, g]) =>
+    (g.timers || []).map(t => ({ ...t, key: `${id}:${t.id}`, game: id, gameName: g.name })));
 }
+
+function rescheduleAlerts() {
+  Notifier.reschedule(allTimers(), allSeasonItems());
+}
+
+// ════════════════════════════════════════════════════════════
+//  GAME SWITCH
+// ════════════════════════════════════════════════════════════
+function setGame(id, view) {
+  if (!config.games[id]) return;
+  gameId = id;
+  try { localStorage.setItem(GAME_KEY, id); } catch (_) {}
+  document.body.dataset.game = id;
+  $$('.game-switch button').forEach(b => {
+    const on = b.dataset.game === id;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-checked', on);
+  });
+  renderGame();
+  const wanted = view || (currentView === 'web' ? lastNativeView : currentView);
+  showView(gameHasView(wanted) ? wanted : 'timers');
+}
+
+function gameHasView(view) {
+  if (view === 'servers') return !!(game().servers || []).length;
+  return ['timers', 'tools', 'season', 'creators', 'support', 'settings'].includes(view);
+}
+
+const SHARED_VIEWS = ['creators', 'support', 'settings'];
 
 // ════════════════════════════════════════════════════════════
 //  NAVIGATION
 // ════════════════════════════════════════════════════════════
-function showView(name) {
+function viewTitle(name) {
+  if (name === 'season') return game().seasonTitle;
+  return $(`#view-${name}`).dataset.title;
+}
+
+function showView(name, tabKey) {
   if (name !== 'web') { lastNativeView = name; closeWeb(); }
   currentView = name;
   $$('.view').forEach(v => { v.hidden = v.id !== `view-${name}`; });
   $('#webActions').hidden = name !== 'web';
-  // The web view belongs to the Tools tab
-  const tab = name === 'web' || name === 'settings' ? (name === 'web' ? 'tools' : null) : name;
-  $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === tab));
-  $$('.drawer-item').forEach(d => d.classList.toggle('active', d.dataset.view === name));
-  if (name !== 'web') $('#topTitle').textContent = $(`#view-${name}`).dataset.title;
+  document.body.classList.toggle('show-gamebar', name !== 'web' && !SHARED_VIEWS.includes(name));
+  if (name !== 'web') document.body.classList.remove('immersive');
+
+  activeTab = tabKey || (name === 'web' ? activeTab : name);
+  $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.key === activeTab));
+  $$('.drawer-item').forEach(d => d.classList.toggle('active',
+    name === 'web' ? d.dataset.web === webKey : d.dataset.view === name));
+  if (name !== 'web') $('#topTitle').textContent = viewTitle(name);
+  $('#main').scrollTop = 0;
   closeDrawer();
 }
 
@@ -77,25 +133,58 @@ function closeDrawer() {
 }
 const drawerOpen = () => $('#drawer').classList.contains('open');
 
+function renderTabs() {
+  $('#tabbar').innerHTML = game().tabs.map(t => {
+    const key = t.view || 'web:' + t.web;
+    const attr = t.view ? `data-view="${t.view}"` : `data-web="${t.web}"`;
+    return `<button class="tab" data-key="${key}" ${attr}><span class="tab-ico">${t.icon}</span><span>${escapeHtml(t.label)}</span></button>`;
+  }).join('');
+  $('#tabbar').style.gridTemplateColumns = `repeat(${game().tabs.length}, 1fr)`;
+}
+
+function renderDrawer() {
+  const g = game();
+  const names = { timers: 'Event Timers', season: g.seasonTitle, servers: 'Server Openings' };
+  $('#drawerLiveTitle').textContent = `Live · ${g.name}`;
+  $('#drawerLive').innerHTML = g.tabs.filter(t => t.view !== 'tools').map(t => {
+    const attr = t.view ? `data-view="${t.view}"` : `data-web="${t.web}"`;
+    const label = t.view ? names[t.view] : (g.tools.find(x => x.id === t.web) || t).label;
+    return `<button class="drawer-item" ${attr}><span>${t.icon}</span> ${escapeHtml(label)}</button>`;
+  }).join('');
+  // Tools that already have their own tab (Combo Codes) are listed under Live instead
+  $('#drawerTools').innerHTML = g.tools.filter(t => !g.tabs.some(tab => tab.web === t.id)).map(t => `
+    <button class="drawer-item" data-web="${t.id}"><span>${t.icon}</span> ${escapeHtml(t.label)}</button>`).join('');
+  $('#hubLabel').textContent = `${g.name} Website`;
+  $('#drawerDisclaimer').textContent = g.disclaimer;
+  document.body.style.setProperty('--disclaimer', JSON.stringify(g.disclaimer));
+}
+
 // ─── Embedded website pages ─────────────────────────────────
-// Each tool gets a fresh iframe so its back-history starts clean. `webDepth`
+// Each page gets a fresh iframe so its back-history starts clean. `webDepth`
 // counts navigations inside it so the Android back button can step back
-// through pages before leaving the tool.
+// through pages before leaving.
 let webDepth = 0;
 let webGoingBack = false;
 let webUrl = '';
+let webKey = '';
 
 function webTarget(key) {
-  if (key === 'hub') return { label: 'Once Human Data', url: 'https://lethalxwolf.live/once-human.html' };
-  return config.tools.find(t => t.id === key);
+  const g = game();
+  if (key === 'hub') return { label: g.name, url: g.hubUrl };
+  if (key === 'main') return { label: 'LethalXWolf', url: config.mainSiteUrl };
+  if (key === 'ravensjest') return config.ravensjest;
+  return g.tools.find(t => t.id === key);
 }
 
-function openWeb(target) {
+function openWeb(target, key) {
   if (!target) return;
+  webKey = key || '';
   webUrl = target.url;
   webDepth = 0;
   webGoingBack = false;
   $('#topTitle').textContent = target.label;
+  // Maps get the whole screen: no tab bar
+  document.body.classList.toggle('immersive', !!target.fullscreen);
 
   const wrap = $('#webFrameWrap');
   wrap.innerHTML = '';
@@ -114,7 +203,9 @@ function openWeb(target) {
   wrap.appendChild(frame);
   // Video-heavy pages fire `load` late; reveal the page while it's still filling in
   setTimeout(() => { $('#webLoading').hidden = true; }, 3500);
-  showView('web');
+  // Highlight the tab this page belongs to: its own tab (Combo Codes) or Tools
+  const tabKey = game().tabs.some(t => t.web === key) ? 'web:' + key : game().tools.includes(target) ? 'tools' : null;
+  showView('web', tabKey);
 }
 
 function closeWeb() {
@@ -134,7 +225,7 @@ async function openExternal(url) {
 
 function handleBack() {
   if (drawerOpen()) return closeDrawer();
-  if (currentView === 'web') { if (!webBack()) showView(lastNativeView === 'web' ? 'tools' : lastNativeView); return; }
+  if (currentView === 'web') { if (!webBack()) showView(lastNativeView); return; }
   if (currentView !== 'timers') return showView('timers');
   AppPlugin && AppPlugin.minimizeApp();
 }
@@ -143,21 +234,22 @@ function handleBack() {
 //  TIMERS
 // ════════════════════════════════════════════════════════════
 function renderTimers() {
+  const g = game();
   const settings = Notifier.loadSettings();
   const ann = $('#announcement');
-  ann.hidden = !config.announcement;
-  ann.textContent = config.announcement || '';
+  ann.hidden = !g.announcement;
+  ann.textContent = g.announcement || '';
 
-  $('#timerGroups').innerHTML = config.timerGroups.map(g => {
-    const timers = config.timers.filter(t => t.group === g.id);
+  $('#timerGroups').innerHTML = g.timerGroups.map(grp => {
+    const timers = g.timers.filter(t => t.group === grp.id);
     if (!timers.length) return '';
     return `
       <div class="group-head">
         <div>
-          <h2 class="section-title">${escapeHtml(g.title)}</h2>
-          ${g.subtitle ? `<div class="group-sub">${escapeHtml(g.subtitle)}</div>` : ''}
+          <h2 class="section-title">${escapeHtml(grp.title)}</h2>
+          ${grp.subtitle ? `<div class="group-sub">${escapeHtml(grp.subtitle)}</div>` : ''}
         </div>
-        ${g.guideUrl ? `<button class="group-link" data-url="${escapeHtml(g.guideUrl)}" data-label="${escapeHtml(g.title)}">Guide →</button>` : ''}
+        ${grp.guideUrl ? `<button class="group-link" data-url="${escapeHtml(grp.guideUrl)}" data-label="${escapeHtml(grp.title)}">Guide →</button>` : ''}
       </div>
       ${timers.map(t => `
         <div class="card timer-card">
@@ -167,12 +259,13 @@ function renderTimers() {
             <div class="timer-value" id="tv-${t.id}">--:--:--</div>
           </div>
           <label class="alert-toggle">ALERT
-            <input type="checkbox" class="switch" data-alert="${t.id}" ${settings.timers[t.id] ? 'checked' : ''} aria-label="Alert for ${escapeHtml(t.label)}" />
+            <input type="checkbox" class="switch" data-alert="${gameId}:${t.id}" ${settings.timers[`${gameId}:${t.id}`] ? 'checked' : ''} aria-label="Alert for ${escapeHtml(t.label)}" />
           </label>
           <div class="timer-next">
             <span id="tn-${t.id}">calculating…</span>
             ${t.linkUrl ? ` · <a href="#" data-url="${escapeHtml(t.linkUrl)}" data-label="${escapeHtml(t.label)}">${escapeHtml(t.linkLabel || 'Open')}</a>` : ''}
           </div>
+          ${t.resets ? `<div class="timer-resets">${t.resets.map(r => `<span>${escapeHtml(r)}</span>`).join('')}</div>` : ''}
         </div>`).join('')}`;
   }).join('');
 
@@ -189,12 +282,15 @@ async function onAlertToggle(box) {
   const s = Notifier.loadSettings();
   s.timers[box.dataset.alert] = box.checked;
   Notifier.saveSettings(s);
-  Notifier.reschedule(config.timers, season);
+  rescheduleAlerts();
+  refreshPermissionUi();
 }
+
+const NEXT_LABEL = { event: 'Next start', change: 'Next change' };
 
 function tickTimers() {
   const now = Date.now();
-  for (const t of config.timers) {
+  for (const t of game().timers) {
     const el = $(`#tv-${t.id}`);
     if (!el) continue;
     const { next, activeUntil } = timerState(t, now);
@@ -206,69 +302,94 @@ function tickTimers() {
       const rem = next - now;
       el.textContent = formatCountdown(rem);
       el.className = 'timer-value' + (rem < HOUR_MS && t.periodHours > 1 ? ' urgent' : '');
-      $(`#tn-${t.id}`).textContent = `${t.kind === 'event' ? 'Next start' : 'Next reset'}: ${formatAbsolute(next)}`;
+      $(`#tn-${t.id}`).textContent = `${NEXT_LABEL[t.kind] || 'Next reset'}: ${formatAbsolute(next)}`;
     }
   }
 }
 
 // ════════════════════════════════════════════════════════════
-//  BATTLE PASS & LOOT CRATES  (same JSON the website uses)
+//  SEASON  (Once Human: same JSON the website uses · Aniimo: config)
 // ════════════════════════════════════════════════════════════
-function seasonCard(item, label, timerId) {
-  return `
-    <div class="card season-card">
-      <img class="season-img" src="${escapeHtml(imageUrl(item.imageUrl))}" alt="${escapeHtml(item.name)}" loading="lazy" onerror="this.style.visibility='hidden'" />
-      <div class="season-body">
-        <div class="season-label">${label}</div>
-        <div class="season-name">${escapeHtml(item.name)}</div>
-        <div class="timer-value" id="${timerId}">--d --h --m</div>
-        <div class="season-ends">Ends ${formatAbsolute(Date.parse(item.endDate))}</div>
-      </div>
-    </div>`;
+function imageUrl(path, base) {
+  if (!path) return '';
+  return /^https?:/.test(path) ? path : base + path.replace(/^\//, '');
 }
 
-function activeCrates() {
+// → [{ title, empty, items: [{ label, name, end, image, what }] }]
+function seasonSections(id) {
+  const g = config.games[id];
   const now = Date.now();
-  return (season.crates || [])
-    .filter(c => Date.parse(c.endDate) > now)
-    .sort((a, b) => Date.parse(b.startDate) - Date.parse(a.startDate));
+  if (g.season.source === 'oncehuman') {
+    const bp = ohSeason.battlepass;
+    const crates = (ohSeason.crates || [])
+      .filter(c => Date.parse(c.endDate) > now)
+      .sort((a, b) => Date.parse(b.startDate) - Date.parse(a.startDate));
+    const img = p => imageUrl(p, g.season.imageBase);
+    return [
+      { title: '🌟 Current Battle Pass', empty: 'No battle pass data yet.',
+        items: bp ? [{ label: '🌟 Current Battle Pass', name: bp.name || 'Battle Pass', end: Date.parse(bp.endDate), image: img(bp.imageUrl), what: 'Battle Pass' }] : [] },
+      { title: '🎁 Current Loot Crates', empty: 'No active loot crates right now.',
+        items: crates.map(c => ({ label: '🎁 Current Loot Crate', name: c.name, end: Date.parse(c.endDate), image: img(c.imageUrl), what: 'Loot Crate' })) },
+    ];
+  }
+  const items = (g.season.items || [])
+    .map(it => ({ label: it.label, name: it.name, end: Date.parse(it.endUtc), image: it.imageUrl || '', what: it.label.replace(/^Current\s+/i, '').split('·')[0].trim() }))
+    .filter(it => it.end > now);
+  return [{ title: `🌟 ${g.seasonTitle}`, empty: 'Nothing running right now. Check back soon.', items }];
 }
 
-function renderSeason(errored) {
-  const bp = season.battlepass;
-  $('#battlePass').innerHTML = bp
-    ? seasonCard(bp, '🌟 Current Battle Pass', 'tv-bp')
-    : `<div class="card loading">${errored ? 'Couldn’t load the battle pass. Check your connection.' : 'No battle pass data yet.'}</div>`;
+function allSeasonItems() {
+  return Object.keys(config.games).flatMap(id =>
+    seasonSections(id).flatMap(s => s.items.map(it => ({ game: id, what: it.what, name: it.name, end: it.end }))));
+}
 
-  const crates = activeCrates();
-  $('#lootCrates').innerHTML = crates.length
-    ? crates.map((c, i) => seasonCard(c, '🎁 Current Loot Crate', `tv-crate-${i}`)).join('')
-    : `<div class="card loading">${errored ? 'Couldn’t load loot crates. Check your connection.' : 'No active loot crates right now.'}</div>`;
+function renderSeason() {
+  const errored = gameId === 'oncehuman' && ohSeasonErrored;
+  let n = 0;
+  $('#seasonBody').innerHTML = seasonSections(gameId).map(sec => `
+    <h2 class="section-title">${escapeHtml(sec.title)}</h2>
+    ${sec.items.length ? sec.items.map(it => `
+      <div class="card season-card">
+        ${it.image ? `<img class="season-img" src="${escapeHtml(it.image)}" alt="${escapeHtml(it.name)}" loading="lazy" onerror="this.remove()" />` : ''}
+        <div class="season-body">
+          <div class="season-label">${escapeHtml(it.label)}</div>
+          <div class="season-name">${escapeHtml(it.name)}</div>
+          <div class="timer-value" data-end="${it.end}" id="sv-${n++}">--d --h --m</div>
+          <div class="season-ends">Ends ${formatAbsolute(it.end)}</div>
+        </div>
+      </div>`).join('')
+      : `<div class="card loading">${errored ? 'Couldn’t load this. Check your connection.' : escapeHtml(sec.empty)}</div>`}`).join('');
+
+  const g = game();
+  $('#seasonAlertHint').textContent = gameId === 'oncehuman'
+    ? 'Notify me 24 hours before the battle pass or a loot crate ends.'
+    : `Notify me 24 hours before the ${g.name} season or banner ends.`;
+  $('#seasonAlert').checked = !!Notifier.loadSettings().seasonEnding[gameId];
   tickSeason();
 }
 
 function tickSeason() {
   const now = Date.now();
-  const set = (id, end) => { const el = $(`#${id}`); if (el) el.textContent = formatDHM(Date.parse(end) - now); };
-  if (season.battlepass) set('tv-bp', season.battlepass.endDate);
-  activeCrates().forEach((c, i) => set(`tv-crate-${i}`, c.endDate));
+  $$('#seasonBody [data-end]').forEach(el => { el.textContent = formatDHM(Number(el.dataset.end) - now); });
 }
 
-async function loadSeason() {
-  const [bp, lc] = await Promise.allSettled([fetchJson(config.battlePassUrl), fetchJson(config.lootCratesUrl)]);
-  if (bp.status === 'fulfilled') season.battlepass = bp.value.battlepass || null;
-  if (lc.status === 'fulfilled') season.crates = lc.value.crates || [];
-  const errored = bp.status === 'rejected' && lc.status === 'rejected';
-  if (!errored) saveCached(SEASON_CACHE_KEY, season);
-  renderSeason(errored && !season.battlepass && !season.crates.length);
-  Notifier.reschedule(config.timers, season);
+async function loadOhSeason() {
+  const s = config.games.oncehuman.season;
+  const [bp, lc] = await Promise.allSettled([fetchJson(s.battlePassUrl), fetchJson(s.lootCratesUrl)]);
+  if (bp.status === 'fulfilled') ohSeason.battlepass = bp.value.battlepass || null;
+  if (lc.status === 'fulfilled') ohSeason.crates = lc.value.crates || [];
+  ohSeasonErrored = bp.status === 'rejected' && lc.status === 'rejected' && !ohSeason.battlepass && !ohSeason.crates.length;
+  if (bp.status === 'fulfilled' || lc.status === 'fulfilled') saveCached(SEASON_CACHE_KEY, ohSeason);
+  renderSeason();
+  rescheduleAlerts();
 }
 
 // ════════════════════════════════════════════════════════════
-//  SERVER OPENINGS
+//  SERVER OPENINGS (Once Human)
 // ════════════════════════════════════════════════════════════
 function renderServers() {
-  $('#serverNote').textContent = config.serverNote;
+  const g = game();
+  $('#serverNote').textContent = g.serverNote || '';
   const block = (s, kind, rec) => rec ? `
       <div class="sc-block">
         <div class="sc-label">${kind}${kind === 'Visional' && s.visionalAlt ? ' · NA EU SEA' : ''}</div>
@@ -278,7 +399,7 @@ function renderServers() {
       </div>` : `
       <div class="sc-block"><div class="sc-label">${kind}</div><div class="sc-na">Visional only</div></div>`;
 
-  $('#serverGrid').innerHTML = config.servers.map(s => `
+  $('#serverGrid').innerHTML = (g.servers || []).map(s => `
     <div class="card server-card">
       <div class="server-name">${escapeHtml(s.name)}</div>
       <div class="server-cols">${block(s, 'Normal', s.normal)}${block(s, 'Visional', s.visional)}</div>
@@ -288,7 +409,7 @@ function renderServers() {
 
 function tickServers() {
   const now = Date.now();
-  for (const s of config.servers) {
+  for (const s of game().servers || []) {
     for (const [kind, rec] of [['Normal', s.normal], ['Visional', s.visional]]) {
       const next = nextServerOpen(rec, now);
       const el = $(`#sc-${kind}-${s.id}`);
@@ -304,14 +425,49 @@ function tickServers() {
 //  TOOLS
 // ════════════════════════════════════════════════════════════
 function renderTools() {
-  $('#toolGrid').innerHTML = config.tools.map(t => `
+  $('#toolGrid').innerHTML = game().tools.map(t => `
     <button class="card tool-card" data-web="${t.id}">
       <span class="tool-ico">${t.icon}</span>
       <span class="tool-name">${escapeHtml(t.label)}</span>
       <span class="tool-desc">${escapeHtml(t.desc || '')}</span>
     </button>`).join('');
-  $('#drawerTools').innerHTML = config.tools.map(t => `
-    <button class="drawer-item" data-web="${t.id}"><span>${t.icon}</span> ${escapeHtml(t.label)}</button>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  CREATORS & SUPPORT (shared by both games)
+// ════════════════════════════════════════════════════════════
+function linkRow(p) {
+  return `
+    <a class="platform-link" href="${escapeHtml(p.url)}" data-external>
+      <span class="dot" style="background:${escapeHtml(p.dot)}"></span>
+      <span class="platform-name">${escapeHtml(p.name)}</span>
+      <span class="platform-handle">${escapeHtml(p.handle)}</span>
+      <span class="platform-arrow">→</span>
+    </a>`;
+}
+
+function renderCreators() {
+  $('#creatorList').innerHTML = config.creators.map(c => `
+    <div class="card creator-card" style="--creator:${escapeHtml(c.accent)}">
+      <div class="creator-head">
+        <img class="creator-avatar" src="${escapeHtml(c.avatar)}" alt="" onerror="this.style.visibility='hidden'" />
+        <div>
+          <div class="creator-name">${escapeHtml(c.name)}</div>
+          <div class="creator-role">${escapeHtml(c.role)}</div>
+        </div>
+      </div>
+      <div class="platforms">${c.platforms.map(linkRow).join('')}</div>
+    </div>`).join('');
+  $('#communityLinks').innerHTML = `<div class="platforms">${(config.communityLinks || []).map(linkRow).join('')}</div>`;
+}
+
+function renderSupport() {
+  const s = config.support;
+  $('#supportTitle').textContent = s.title;
+  $('#supportText').innerHTML = s.paragraphs.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+  $('#supportButtons').innerHTML = s.buttons.map(b => `
+    <a class="support-btn support-btn--${escapeHtml(b.style || 'secondary')}" href="${escapeHtml(b.url)}" data-external>${escapeHtml(b.label)}</a>`).join('');
+  $('#supportFootnote').textContent = s.footnote || '';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -320,13 +476,12 @@ function renderTools() {
 function renderSettings() {
   const s = Notifier.loadSettings();
   $$('#leadSeg button').forEach(b => b.classList.toggle('active', Number(b.dataset.lead) === s.leadMin));
-  $('#seasonAlert').checked = !!s.seasonEnding;
   refreshPermissionUi();
 }
 
 async function refreshPermissionUi() {
   const s = Notifier.loadSettings();
-  const anyOn = s.seasonEnding || Object.values(s.timers).some(Boolean);
+  const anyOn = Object.values(s.seasonEnding).some(Boolean) || Object.values(s.timers).some(Boolean);
   if (Notifier.native) {
     $('#permNotice').hidden = !anyOn || await Notifier.hasPermission();
     $('#exactCard').hidden = !anyOn || await Notifier.exactAlarmsAllowed();
@@ -339,22 +494,22 @@ function bindSettings() {
     s.leadMin = Number(b.dataset.lead);
     Notifier.saveSettings(s);
     renderSettings();
-    Notifier.reschedule(config.timers, season);
+    rescheduleAlerts();
   }));
   $('#seasonAlert').addEventListener('change', async e => {
     if (e.target.checked && !(await Notifier.ensurePermission())) { e.target.checked = false; return; }
     const s = Notifier.loadSettings();
-    s.seasonEnding = e.target.checked;
+    s.seasonEnding[gameId] = e.target.checked;
     Notifier.saveSettings(s);
-    Notifier.reschedule(config.timers, season);
+    rescheduleAlerts();
   });
   $('#exactFix').addEventListener('click', async () => {
     await Notifier.openExactAlarmSettings();
     refreshPermissionUi();
-    Notifier.reschedule(config.timers, season);
+    rescheduleAlerts();
   });
   $('#permFix').addEventListener('click', async () => {
-    if (await Notifier.ensurePermission()) { $('#permNotice').hidden = true; Notifier.reschedule(config.timers, season); }
+    if (await Notifier.ensurePermission()) { $('#permNotice').hidden = true; rescheduleAlerts(); }
   });
   $('#testAlert').addEventListener('click', async () => {
     const ok = await Notifier.sendTest();
@@ -365,7 +520,7 @@ function bindSettings() {
 }
 
 // ════════════════════════════════════════════════════════════
-//  REMOTE CONFIG — lets the website change timers/tools/servers
+//  REMOTE CONFIG — lets the website change timers/tools/links
 // ════════════════════════════════════════════════════════════
 async function loadRemoteConfig() {
   try {
@@ -374,17 +529,26 @@ async function loadRemoteConfig() {
     saveCached(CONFIG_CACHE_KEY, remote);
     config = loadCachedConfig();
     renderAll();
-    Notifier.reschedule(config.timers, season);
+    if (currentView !== 'web') showView(gameHasView(currentView) ? currentView : 'timers');
+    rescheduleAlerts();
   } catch (err) {
     console.info('[config] using built-in/cached config:', err.message);
   }
 }
 
-function renderAll() {
+function renderGame() {
+  renderTabs();
+  renderDrawer();
   renderTimers();
   renderTools();
   renderServers();
-  renderSeason(false);
+  renderSeason();
+}
+
+function renderAll() {
+  renderGame();
+  renderCreators();
+  renderSupport();
   renderSettings();
 }
 
@@ -395,13 +559,15 @@ function bindNav() {
   $('#menuBtn').addEventListener('click', () => (drawerOpen() ? closeDrawer() : openDrawer()));
   $('#scrim').addEventListener('click', closeDrawer);
 
-  // One delegated handler for every [data-view] / [data-web] / [data-url] control
+  // One delegated handler for every navigation control
   document.addEventListener('click', e => {
-    const el = e.target.closest('[data-view], [data-web], [data-url]');
-    if (!el || el.closest('#leadSeg')) return;
+    const el = e.target.closest('[data-game], [data-view], [data-web], [data-url], [data-external]');
+    if (!el || el === document.body || el.closest('#leadSeg')) return;
     e.preventDefault();
-    if (el.dataset.view) showView(el.dataset.view);
-    else if (el.dataset.web) openWeb(webTarget(el.dataset.web));
+    if (el.hasAttribute('data-external')) openExternal(el.href);
+    else if (el.closest('.game-switch')) { if (el.dataset.game !== gameId) setGame(el.dataset.game); else closeDrawer(); }
+    else if (el.dataset.view) showView(el.dataset.view);
+    else if (el.dataset.web) openWeb(webTarget(el.dataset.web), el.dataset.web);
     else openWeb({ url: el.dataset.url, label: el.dataset.label || 'LxW' });
   });
 
@@ -416,21 +582,23 @@ function bindNav() {
   if (AppPlugin) {
     AppPlugin.addListener('backButton', handleBack);
     AppPlugin.addListener('resume', () => {
-      loadSeason();
+      loadOhSeason();
       loadRemoteConfig();
       refreshPermissionUi();
-      Notifier.reschedule(config.timers, season);
+      rescheduleAlerts();
     });
     AppPlugin.getInfo().then(i => { $('#appVersion').textContent = `Version ${i.version} (${i.build})`; }).catch(() => {});
   }
-  Notifier.onTap(extra => showView(extra.view || 'timers'));
+  Notifier.onTap(extra => setGame(extra.game || gameId, extra.view || 'timers'));
 }
 
 async function init() {
   bindNav();
   bindSettings();
-  renderAll();
-  showView('timers');
+  renderCreators();
+  renderSupport();
+  renderSettings();
+  setGame(gameId, 'timers');
 
   setInterval(() => {
     if (currentView === 'timers') tickTimers();
@@ -439,9 +607,9 @@ async function init() {
   }, 1000);
 
   await Notifier.init().catch(err => console.warn('[alerts] init', err));
-  loadSeason();
+  loadOhSeason();
   loadRemoteConfig();
-  Notifier.reschedule(config.timers, season);
+  rescheduleAlerts();
 }
 
 init();

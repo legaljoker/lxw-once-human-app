@@ -1,11 +1,11 @@
 {
-  "name": "lxw-once-human",
-  "version": "1.0.0",
-  "description": "LxW Once Human companion app (unofficial fan app)",
+  "name": "lxw-app",
+  "version": "1.1.0",
+  "description": "LxW companion app for lethalxwolf.live: Once Human and Aniimo (unofficial fan app)",
   "scripts": {
     "sync": "cap sync android",
     "build:apk": "cap sync android && cd android && ./gradlew assembleDebug",
-    "test": "node test/schedule.test.js"
+    "test": "TZ=UTC node test/schedule.test.js && TZ=America/Chicago node test/schedule.test.js && TZ=Asia/Kolkata node test/schedule.test.js && TZ=Australia/Adelaide node test/schedule.test.js"
   },
   "keywords": [],
   "author": "",

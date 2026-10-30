@@ -1,6 +1,6 @@
 {
-  "appId": "live.lethalxwolf.oncehuman",
-  "appName": "LxW Once Human",
+  "appId": "live.lethalxwolf.app",
+  "appName": "LxW",
   "webDir": "www",
   "backgroundColor": "#08070f",
   "android": {

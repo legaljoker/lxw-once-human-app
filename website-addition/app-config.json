@@ -1,229 +1,505 @@
 {
-  "_readme": "LxW app settings. Upload to once-human/data/app-config.json. Any key you leave out uses the app built-in value. Each list (timers, tools, servers) replaces the whole built-in list, so keep every entry. Times are UTC.",
-  "announcement": "",
-  "timerGroups": [
+  "_readme": "LxW app settings. Upload to once-human/data/app-config.json. Any key you leave out uses the app built-in value. Each list replaces the whole built-in list, so keep every entry. Times are UTC unless noted. See README in the app repo.",
+  "games": {
+    "oncehuman": {
+      "announcement": "",
+      "timerGroups": [
+        {
+          "id": "resets",
+          "title": "Resets & Daily Timers"
+        },
+        {
+          "id": "gravity-abyss",
+          "title": "Gravity Abyss",
+          "subtitle": "Visional Wheel · Season 4 · Visional Worlds only",
+          "guideUrl": "https://lethalxwolf.live/once-human/GravityAbyss.html"
+        }
+      ],
+      "timers": [
+        {
+          "id": "loot-reset",
+          "group": "resets",
+          "icon": "📦",
+          "label": "Loot Reset",
+          "anchorUtc": "2026-01-01T00:00:00Z",
+          "periodHours": 4
+        },
+        {
+          "id": "tech-scan-loot",
+          "group": "resets",
+          "icon": "🔎",
+          "label": "Tech Scan Loot",
+          "anchorUtc": "2026-01-01T00:00:00Z",
+          "periodHours": 6
+        },
+        {
+          "id": "securement",
+          "group": "resets",
+          "icon": "⚙️",
+          "label": "Securement Units",
+          "anchorUtc": "2026-01-01T00:00:00Z",
+          "periodHours": 24
+        },
+        {
+          "id": "daily-deviation",
+          "group": "resets",
+          "icon": "🦋",
+          "label": "Daily Deviation Spawns",
+          "anchorUtc": "2026-01-01T00:00:00Z",
+          "periodHours": 24,
+          "linkUrl": "https://lethalxwolf.live/once-human/map-portal.html",
+          "linkLabel": "View today’s spawns"
+        },
+        {
+          "id": "miss-memory",
+          "group": "resets",
+          "icon": "🕐",
+          "label": "Miss Memory",
+          "anchorUtc": "2026-01-05T04:00:00Z",
+          "periodHours": 168
+        },
+        {
+          "id": "gravity-event",
+          "group": "gravity-abyss",
+          "icon": "🌀",
+          "label": "Gravity Event",
+          "kind": "event",
+          "anchorUtc": "2026-01-01T00:22:30Z",
+          "periodHours": 1,
+          "durationMin": 30
+        },
+        {
+          "id": "aerial-hunt",
+          "group": "gravity-abyss",
+          "icon": "🔮",
+          "label": "Aerial Hunt",
+          "kind": "event",
+          "anchorUtc": "2026-01-01T00:37:30Z",
+          "periodHours": 1,
+          "durationMin": 20
+        }
+      ],
+      "tools": [
+        {
+          "id": "builds",
+          "icon": "🛠️",
+          "label": "Builds",
+          "desc": "Optimized gear, weapon calibrations, and cradle setups.",
+          "url": "https://lethalxwolf.live/once-human/builds.html"
+        },
+        {
+          "id": "deviations",
+          "icon": "🦋",
+          "label": "Deviation Library",
+          "desc": "Every Deviation companion — skills, variations & SCP techniques.",
+          "url": "https://lethalxwolf.live/once-human/deviation-library.html"
+        },
+        {
+          "id": "map",
+          "icon": "🗺️",
+          "label": "Interactive Map",
+          "fullscreen": true,
+          "desc": "Deviations, Mods & Loot locations.",
+          "url": "https://lethalxwolf.live/once-human/map-portal.html"
+        },
+        {
+          "id": "fusion",
+          "icon": "🧪",
+          "label": "Fusion Pod",
+          "desc": "Combine Deviations to refine stats and unlock superior versions.",
+          "url": "https://lethalxwolf.live/once-human/fusion-pod.html"
+        },
+        {
+          "id": "tech",
+          "icon": "🔬",
+          "label": "Tech Invention",
+          "desc": "Explore Tech and unlock Tech-driven growth.",
+          "url": "https://lethalxwolf.live/once-human/tech-invention.html"
+        },
+        {
+          "id": "gravity",
+          "icon": "🌀",
+          "label": "Gravity Abyss Guide",
+          "desc": "Visional Wheel S4 — mechanics, rewards and tips.",
+          "url": "https://lethalxwolf.live/once-human/GravityAbyss.html"
+        }
+      ],
+      "servers": [
+        {
+          "id": "dscp",
+          "name": "Deviation: Survive, Capture, Preserve",
+          "normal": {
+            "type": "monthly",
+            "days": [
+              1
+            ],
+            "hour": 15,
+            "minute": 0
+          },
+          "visional": {
+            "type": "biweekly",
+            "weekday": 6,
+            "hour": 15,
+            "minute": 0,
+            "reference": "2026-05-30"
+          },
+          "visionalAlt": "1st & 15th — SA · JP · KR · HK"
+        },
+        {
+          "id": "endless-dream",
+          "name": "Endless Dream",
+          "normal": {
+            "type": "monthly",
+            "days": [
+              1
+            ],
+            "hour": 15,
+            "minute": 0
+          },
+          "visional": {
+            "type": "weekly",
+            "weekday": 6,
+            "hour": 15,
+            "minute": 0
+          },
+          "visionalAlt": "1st & 15th — SA · JP · KR · HK"
+        },
+        {
+          "id": "manibus",
+          "name": "Manibus",
+          "normal": {
+            "type": "monthly",
+            "days": [
+              1
+            ],
+            "hour": 15,
+            "minute": 0
+          },
+          "visional": {
+            "type": "weekly",
+            "weekday": 6,
+            "hour": 15,
+            "minute": 0
+          },
+          "visionalAlt": "1st & 15th — SA · JP · KR · HK"
+        },
+        {
+          "id": "way-of-winter",
+          "name": "The Way of Winter",
+          "normal": {
+            "type": "monthly",
+            "days": [
+              1
+            ],
+            "hour": 15,
+            "minute": 0
+          },
+          "visional": {
+            "type": "weekly",
+            "weekday": 6,
+            "hour": 15,
+            "minute": 0
+          },
+          "visionalAlt": "1st & 15th — SA · JP · KR · HK"
+        },
+        {
+          "id": "prismverse",
+          "name": "Prismverse's Clash",
+          "normal": null,
+          "visional": {
+            "type": "weekly",
+            "weekday": 6,
+            "hour": 15,
+            "minute": 0
+          }
+        },
+        {
+          "id": "evolution-call",
+          "name": "Evolution's Call",
+          "normal": null,
+          "visional": {
+            "type": "monthly",
+            "days": [
+              1
+            ],
+            "hour": 15,
+            "minute": 0
+          },
+          "visionalAlt": "Not available — SA · JP · KR · HK"
+        }
+      ],
+      "serverNote": "Countdowns show time until the next server opens (NA · EU · SEA schedule). Visional schedules vary by region. Times are approximate and shown in your local time zone."
+    },
+    "aniimo": {
+      "announcement": "",
+      "season": {
+        "source": "static",
+        "items": [
+          {
+            "label": "Current Season · Part 1",
+            "name": "Departure with the Wind",
+            "endUtc": "2026-12-09T08:00:00Z"
+          },
+          {
+            "label": "Current Banner",
+            "name": "Forest of Butterfly Dream",
+            "endUtc": "2026-10-30T01:00:00Z"
+          }
+        ]
+      },
+      "timerGroups": [
+        {
+          "id": "resets",
+          "title": "Resets & Cycles",
+          "subtitle": "Resets 08:00 UTC, shown in your time"
+        }
+      ],
+      "timers": [
+        {
+          "id": "daily",
+          "group": "resets",
+          "icon": "☀️",
+          "label": "Daily Reset",
+          "anchorUtc": "2026-01-01T08:00:00Z",
+          "periodHours": 24,
+          "resets": [
+            "Daily tasks",
+            "Corner Shop",
+            "Mysterious Vendor"
+          ],
+          "linkUrl": "https://lethalxwolf.live/aniimo/Check-in%20List.dc.html?tab=daily",
+          "linkLabel": "Full list"
+        },
+        {
+          "id": "weekly",
+          "group": "resets",
+          "icon": "📆",
+          "label": "Weekly Reset",
+          "anchorUtc": "2026-01-05T08:00:00Z",
+          "periodHours": 168,
+          "resets": [
+            "Holo-Battle Sim",
+            "Holo-Battle Interlink",
+            "Omega bosses",
+            "Aniipod Discounts",
+            "Friend gifts"
+          ],
+          "linkUrl": "https://lethalxwolf.live/aniimo/Check-in%20List.dc.html?tab=weekly",
+          "linkLabel": "Full list"
+        },
+        {
+          "id": "weather",
+          "group": "resets",
+          "icon": "🌦️",
+          "label": "Weather Cycle",
+          "kind": "change",
+          "localAnchorHour": 18,
+          "periodHours": 4
+        }
+      ],
+      "tools": [
+        {
+          "id": "aniilog",
+          "icon": "📖",
+          "label": "AniiLog",
+          "desc": "Database — every Aniimo: forms, evolution paths, spawns, traits and skills.",
+          "url": "https://lethalxwolf.live/aniimo/AniiLog.dc.html"
+        },
+        {
+          "id": "egg-heist",
+          "icon": "🥚",
+          "label": "Egg Heist Info Broker",
+          "desc": "PvEvP intel — maps, egg routes, extraction points and squad intel.",
+          "url": "https://lethalxwolf.live/aniimo/Egg%20Heist.dc.html"
+        },
+        {
+          "id": "combo-codes",
+          "icon": "🔢",
+          "label": "Combo Codes",
+          "desc": "Community combo codes — grab ones that work, share yours.",
+          "url": "https://lethalxwolf.live/aniimo/Combo%20Codes.dc.html"
+        },
+        {
+          "id": "team-comps",
+          "icon": "👥",
+          "label": "Team Comps",
+          "desc": "Recommended lineups for PvE, Egg Heist and PvP.",
+          "url": "https://lethalxwolf.live/aniimo/Team%20Comps.dc.html"
+        },
+        {
+          "id": "tier-list",
+          "icon": "🏆",
+          "label": "Tier List",
+          "desc": "Current rankings by role and game mode.",
+          "url": "https://lethalxwolf.live/aniimo/Tier%20List.dc.html"
+        },
+        {
+          "id": "bosses",
+          "icon": "👹",
+          "label": "Bosses",
+          "desc": "World bosses, Boss Rush and Territories with matchups.",
+          "url": "https://lethalxwolf.live/aniimo/Bosses.dc.html"
+        },
+        {
+          "id": "items",
+          "icon": "🎒",
+          "label": "Items",
+          "desc": "Every item by category: Aniimo, Homeland, Egg Heist, Appearance and more.",
+          "url": "https://lethalxwolf.live/aniimo/Items.dc.html"
+        },
+        {
+          "id": "map",
+          "icon": "🗺️",
+          "label": "Interactive Map",
+          "fullscreen": true,
+          "desc": "Spawns by weather and time, resources and puzzles.",
+          "url": "https://lethalxwolf.live/aniimo/Interactive%20Map.dc.html"
+        },
+        {
+          "id": "twining",
+          "icon": "🧬",
+          "label": "Twining & Evolution",
+          "desc": "Explore abilities and evolution requirements.",
+          "url": "https://lethalxwolf.live/aniimo/Twining%20%26%20Evolution.dc.html"
+        },
+        {
+          "id": "homeland",
+          "icon": "🏕️",
+          "label": "Homeland & RV",
+          "desc": "Crops, decorations and campsite builds.",
+          "url": "https://lethalxwolf.live/aniimo/Homeland%20%26%20RV.dc.html"
+        },
+        {
+          "id": "beginner",
+          "icon": "🧭",
+          "label": "Beginner Guide",
+          "desc": "First hours in Idyll, step by step.",
+          "url": "https://lethalxwolf.live/aniimo/Beginner%20Guide.dc.html"
+        },
+        {
+          "id": "check-in",
+          "icon": "✅",
+          "label": "Check-in List",
+          "desc": "Daily and weekly to-dos with what each reset refreshes.",
+          "url": "https://lethalxwolf.live/aniimo/Check-in%20List.dc.html"
+        },
+        {
+          "id": "patch-notes",
+          "icon": "📝",
+          "label": "Patch Notes",
+          "desc": "Every update, with what changed for your team.",
+          "url": "https://lethalxwolf.live/aniimo/Patch%20Notes.dc.html"
+        }
+      ]
+    }
+  },
+  "creators": [
     {
-      "id": "resets",
-      "title": "Resets & Daily Timers"
+      "name": "Wolf_Poe",
+      "role": "Chaos Agent · Co-Host",
+      "avatar": "https://lethalxwolf.live/images/DiscordAvatar2.0.webp",
+      "accent": "#34e0c4",
+      "platforms": [
+        {
+          "name": "Kick",
+          "handle": "wolf-poe",
+          "url": "https://kick.com/wolf-poe",
+          "dot": "#53fc18"
+        },
+        {
+          "name": "Twitch",
+          "handle": "wolf_poe",
+          "url": "https://twitch.tv/wolf_poe",
+          "dot": "#9b5cf6"
+        },
+        {
+          "name": "YouTube",
+          "handle": "@wolfpoeofficial",
+          "url": "https://youtube.com/@wolfpoeofficial",
+          "dot": "#ff5252"
+        },
+        {
+          "name": "TikTok",
+          "handle": "@wolfpoeofficial",
+          "url": "https://tiktok.com/@wolfpoeofficial",
+          "dot": "#34e0c4"
+        }
+      ]
     },
     {
-      "id": "gravity-abyss",
-      "title": "Gravity Abyss",
-      "subtitle": "Visional Wheel · Season 4 · Visional Worlds only",
-      "guideUrl": "https://lethalxwolf.live/once-human/GravityAbyss.html"
+      "name": "LethalJoker",
+      "role": "Chaos Agent · Co-Host",
+      "avatar": "https://lethalxwolf.live/images/lethalxjoker.webp",
+      "accent": "#9b5cf6",
+      "platforms": [
+        {
+          "name": "Kick",
+          "handle": "lethalxjoker",
+          "url": "https://kick.com/lethalxjoker",
+          "dot": "#53fc18"
+        },
+        {
+          "name": "Twitch",
+          "handle": "lethalxjoker",
+          "url": "https://twitch.tv/lethalxjoker",
+          "dot": "#9b5cf6"
+        },
+        {
+          "name": "YouTube",
+          "handle": "@LethalXWolf",
+          "url": "https://www.youtube.com/@LethalXWolf",
+          "dot": "#ff5252"
+        },
+        {
+          "name": "TikTok",
+          "handle": "@lethaljoker",
+          "url": "https://tiktok.com/@lethaljoker",
+          "dot": "#34e0c4"
+        },
+        {
+          "name": "Rumble",
+          "handle": "LethalxWolfGaming",
+          "url": "https://rumble.com/user/LethalxWolfGaming",
+          "dot": "#85c742"
+        }
+      ]
     }
   ],
-  "timers": [
+  "communityLinks": [
     {
-      "id": "loot-reset",
-      "group": "resets",
-      "icon": "📦",
-      "label": "Loot Reset",
-      "anchorUtc": "2026-01-01T00:00:00Z",
-      "periodHours": 4
-    },
-    {
-      "id": "tech-scan-loot",
-      "group": "resets",
-      "icon": "🔎",
-      "label": "Tech Scan Loot",
-      "anchorUtc": "2026-01-01T00:00:00Z",
-      "periodHours": 6
-    },
-    {
-      "id": "securement",
-      "group": "resets",
-      "icon": "⚙️",
-      "label": "Securement Units",
-      "anchorUtc": "2026-01-01T00:00:00Z",
-      "periodHours": 24
-    },
-    {
-      "id": "daily-deviation",
-      "group": "resets",
-      "icon": "🦋",
-      "label": "Daily Deviation Spawns",
-      "anchorUtc": "2026-01-01T00:00:00Z",
-      "periodHours": 24,
-      "linkUrl": "https://lethalxwolf.live/once-human/map-portal.html",
-      "linkLabel": "View today’s spawns"
-    },
-    {
-      "id": "miss-memory",
-      "group": "resets",
-      "icon": "🕐",
-      "label": "Miss Memory",
-      "anchorUtc": "2026-01-05T04:00:00Z",
-      "periodHours": 168
-    },
-    {
-      "id": "gravity-event",
-      "group": "gravity-abyss",
-      "icon": "🌀",
-      "label": "Gravity Event",
-      "kind": "event",
-      "anchorUtc": "2026-01-01T00:22:30Z",
-      "periodHours": 1,
-      "durationMin": 30
-    },
-    {
-      "id": "aerial-hunt",
-      "group": "gravity-abyss",
-      "icon": "🔮",
-      "label": "Aerial Hunt",
-      "kind": "event",
-      "anchorUtc": "2026-01-01T00:37:30Z",
-      "periodHours": 1,
-      "durationMin": 20
+      "name": "Discord",
+      "handle": "Community server",
+      "url": "https://discord.gg/aHC5Su85Cq",
+      "dot": "#5865f2"
     }
   ],
-  "tools": [
-    {
-      "id": "builds",
-      "icon": "🛠️",
-      "label": "Builds",
-      "desc": "Optimized gear, weapon calibrations, and cradle setups.",
-      "url": "https://lethalxwolf.live/once-human/builds.html"
-    },
-    {
-      "id": "deviations",
-      "icon": "🦋",
-      "label": "Deviation Library",
-      "desc": "Every Deviation companion — skills, variations & SCP techniques.",
-      "url": "https://lethalxwolf.live/once-human/deviation-library.html"
-    },
-    {
-      "id": "map",
-      "icon": "🗺️",
-      "label": "Interactive Map",
-      "desc": "Deviations, Mods & Loot locations.",
-      "url": "https://lethalxwolf.live/once-human/map-portal.html"
-    },
-    {
-      "id": "fusion",
-      "icon": "🧪",
-      "label": "Fusion Pod",
-      "desc": "Combine Deviations to refine stats and unlock superior versions.",
-      "url": "https://lethalxwolf.live/once-human/fusion-pod.html"
-    },
-    {
-      "id": "tech",
-      "icon": "🔬",
-      "label": "Tech Invention",
-      "desc": "Explore Tech and unlock Tech-driven growth.",
-      "url": "https://lethalxwolf.live/once-human/tech-invention.html"
-    },
-    {
-      "id": "gravity",
-      "icon": "🌀",
-      "label": "Gravity Abyss Guide",
-      "desc": "Visional Wheel S4 — mechanics, rewards and tips.",
-      "url": "https://lethalxwolf.live/once-human/GravityAbyss.html"
-    }
-  ],
-  "servers": [
-    {
-      "id": "dscp",
-      "name": "Deviation: Survive, Capture, Preserve",
-      "normal": {
-        "type": "monthly",
-        "days": [
-          1
-        ],
-        "hour": 15,
-        "minute": 0
+  "support": {
+    "title": "Support LethalxWolf",
+    "paragraphs": [
+      "LethalxWolf is a two-person fan project. Every page, interactive map and guide is researched, written and kept current by hand.",
+      "However you can chip in (a monthly membership, a one-off tip, or just telling a friend), thank you. It all helps to keep this running for everyone ad free."
+    ],
+    "buttons": [
+      {
+        "label": "⭐ Become a Monthly Supporter",
+        "url": "https://buy.stripe.com/aFa28r1oxfpF5jGbt43F600",
+        "style": "primary"
       },
-      "visional": {
-        "type": "biweekly",
-        "weekday": 6,
-        "hour": 15,
-        "minute": 0,
-        "reference": "2026-05-30"
+      {
+        "label": "🤝 Support the Team",
+        "url": "https://donate.stripe.com/8x26oH2sB5P5dQccx83F602",
+        "style": "secondary"
       },
-      "visionalAlt": "1st & 15th — SA · JP · KR · HK"
-    },
-    {
-      "id": "endless-dream",
-      "name": "Endless Dream",
-      "normal": {
-        "type": "monthly",
-        "days": [
-          1
-        ],
-        "hour": 15,
-        "minute": 0
-      },
-      "visional": {
-        "type": "weekly",
-        "weekday": 6,
-        "hour": 15,
-        "minute": 0
-      },
-      "visionalAlt": "1st & 15th — SA · JP · KR · HK"
-    },
-    {
-      "id": "manibus",
-      "name": "Manibus",
-      "normal": {
-        "type": "monthly",
-        "days": [
-          1
-        ],
-        "hour": 15,
-        "minute": 0
-      },
-      "visional": {
-        "type": "weekly",
-        "weekday": 6,
-        "hour": 15,
-        "minute": 0
-      },
-      "visionalAlt": "1st & 15th — SA · JP · KR · HK"
-    },
-    {
-      "id": "way-of-winter",
-      "name": "The Way of Winter",
-      "normal": {
-        "type": "monthly",
-        "days": [
-          1
-        ],
-        "hour": 15,
-        "minute": 0
-      },
-      "visional": {
-        "type": "weekly",
-        "weekday": 6,
-        "hour": 15,
-        "minute": 0
-      },
-      "visionalAlt": "1st & 15th — SA · JP · KR · HK"
-    },
-    {
-      "id": "prismverse",
-      "name": "Prismverse's Clash",
-      "normal": null,
-      "visional": {
-        "type": "weekly",
-        "weekday": 6,
-        "hour": 15,
-        "minute": 0
+      {
+        "label": "☕ Just a Tip ($1)",
+        "url": "https://buy.stripe.com/bJeeVdgjrcdtaE0bt43F601",
+        "style": "tertiary"
       }
-    },
-    {
-      "id": "evolution-call",
-      "name": "Evolution's Call",
-      "normal": null,
-      "visional": {
-        "type": "monthly",
-        "days": [
-          1
-        ],
-        "hour": 15,
-        "minute": 0
-      },
-      "visionalAlt": "Not available — SA · JP · KR · HK"
-    }
-  ],
-  "serverNote": "Countdowns show time until the next server opens (NA · EU · SEA schedule). Visional schedules vary by region. Times are approximate and shown in your local time zone."
+    ],
+    "footnote": "Any amount helps, and none is expected. Thank you."
+  },
+  "ravensjest": {
+    "label": "RavensJest Discord Bot",
+    "url": "https://dashboard.lethalxwolf.live/welcome"
+  }
 }

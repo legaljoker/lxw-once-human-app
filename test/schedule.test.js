@@ -9,7 +9,9 @@ const ctx = { module: { exports: {} } };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../www/js/config.js'), 'utf8') + ';this.DEFAULT_CONFIG = DEFAULT_CONFIG;', ctx);
 const { timerState, occurrences, nextServerOpen } = require('../www/js/schedule.js');
-const timers = Object.fromEntries(ctx.DEFAULT_CONFIG.timers.map(t => [t.id, t]));
+const games  = ctx.DEFAULT_CONFIG.games;
+const timers = Object.fromEntries(games.oncehuman.timers.map(t => [t.id, t]));
+const aniimo = Object.fromEntries(games.aniimo.timers.map(t => [t.id, t]));
 
 // ── Website reference implementations ──
 const site = {
@@ -43,6 +45,21 @@ for (let i = 0; i < 20000; i++) {
   }
 }
 
+// ── Aniimo hub reference implementations (from the hub page's Component) ──
+const anSite = {
+  daily:   now => { const d = new Date(now); d.setUTCHours(8, 0, 0, 0); if (d <= now) d.setUTCDate(d.getUTCDate() + 1); return +d; },
+  weekly:  now => { const d = new Date(now); d.setUTCHours(8, 0, 0, 0); d.setUTCDate(d.getUTCDate() + ((1 - d.getUTCDay() + 7) % 7)); if (d <= now) d.setUTCDate(d.getUTCDate() + 7); return +d; },
+  weather: now => { const d = new Date(now); d.setHours(18 % 4, 0, 0, 0); while (d <= now) d.setHours(d.getHours() + 4); return +d; },
+};
+for (let i = 0; i < 20000; i++) {
+  const now = Date.UTC(2026, 0, 1) + Math.floor(Math.random() * 3 * 365 * 86400) * 1000;
+  for (const [id, ref] of Object.entries(anSite)) {
+    assert.strictEqual(timerState(aniimo[id], now).next, ref(now), `aniimo ${id} at ${new Date(now).toISOString()} (TZ ${process.env.TZ})`);
+    checks++;
+  }
+}
+assert.strictEqual(occurrences(aniimo.weather, Date.UTC(2026, 9, 30), Date.UTC(2026, 10, 6)).length, 42);
+
 // Exact boundary: at 04:00:00.000 the loot reset just happened → next is 08:00
 assert.strictEqual(timerState(timers['loot-reset'], Date.UTC(2026, 9, 30, 4)).next, Date.UTC(2026, 9, 30, 8));
 // Miss Memory lands on a Monday
@@ -57,4 +74,4 @@ const bi = nextServerOpen({ type: 'biweekly', weekday: 6, hour: 15, minute: 0, r
 assert.strictEqual(((bi - Date.UTC(2026, 4, 30, 15)) / (7 * 86400000)) % 2, 0);
 assert.strictEqual(nextServerOpen({ type: 'monthly', days: [1], hour: 15, minute: 0 }, Date.UTC(2026, 9, 30)), Date.UTC(2026, 10, 1, 15));
 
-console.log(`schedule tests passed (${checks} random comparisons against the website's formulas)`);
+console.log(`[TZ ${process.env.TZ || 'system'}] schedule tests passed (${checks} random comparisons against the website's formulas)`);

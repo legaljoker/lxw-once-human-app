@@ -21,7 +21,13 @@ const Notifier = (() => {
   function loadSettings() {
     let s = {};
     try { s = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (_) {}
-    return { timers: {}, seasonEnding: false, leadMin: 5, ...s };
+    s = { timers: {}, seasonEnding: {}, leadMin: 5, ...s };
+    // v1.0 stored Once Human-only keys ("loot-reset", seasonEnding: true)
+    for (const k of Object.keys(s.timers)) {
+      if (!k.includes(':')) { s.timers['oncehuman:' + k] = s.timers[k]; delete s.timers[k]; }
+    }
+    if (typeof s.seasonEnding !== 'object') s.seasonEnding = { oncehuman: !!s.seasonEnding };
+    return s;
   }
 
   function saveSettings(s) {
@@ -56,7 +62,7 @@ const Notifier = (() => {
   async function init() {
     if (!native) return;
     await plugin.createChannel({
-      id: CHANNEL_ID, name: 'Event timers', description: 'Once Human reset and event alerts',
+      id: CHANNEL_ID, name: 'Event timers', description: 'Once Human and Aniimo reset and event alerts',
       importance: 4, visibility: 1, vibration: true,
     });
   }
@@ -67,57 +73,62 @@ const Notifier = (() => {
     return 24 * 28;
   }
 
+  const VERBS = {
+    event:  ['Starts', 'Starting'],
+    change: ['Changes', 'Changing'],
+    reset:  ['Resets', 'Resetting'],
+  };
+
+  // `timers` come from every game; each carries `key` ("game:id"), `game` and `gameName`
   function timerNotifications(timers, settings, now) {
     const lead = settings.leadMin * 60000;
     const out  = [];
     timers.forEach((t, idx) => {
-      if (!settings.timers[t.id]) return;
+      if (!settings.timers[t.key]) return;
       const starts = occurrences(t, now + lead, now + horizonHours(t) * HOUR_MS).slice(0, MAX_PER_TIMER);
-      const verb   = t.kind === 'event' ? 'starts' : 'resets';
+      const [soon, nowVerb] = VERBS[t.kind] || VERBS.reset;
       starts.forEach((start, n) => {
         out.push({
           id: (idx + 1) * 1000 + n,
-          title: `${t.icon} ${t.label}`,
+          title: `${t.icon} ${t.label} · ${t.gameName}`,
           body: settings.leadMin
-            ? `${verb === 'starts' ? 'Starts' : 'Resets'} in ${settings.leadMin} min (${formatTime(start)})`
-            : `${verb === 'starts' ? 'Starting' : 'Resetting'} now`,
+            ? `${soon} in ${settings.leadMin} min (${formatTime(start)})`
+            : `${nowVerb} now`,
           at: start - lead,
-          extra: { view: 'timers' },
+          extra: { view: 'timers', game: t.game },
         });
       });
     });
     return out;
   }
 
-  // "Ending soon" — 24 h before the battle pass / each loot crate ends
-  function seasonNotifications(season, settings, now) {
-    if (!settings.seasonEnding) return [];
-    const items = [];
-    if (season.battlepass) items.push({ name: season.battlepass.name || 'Battle Pass', end: season.battlepass.endDate, what: 'Battle Pass' });
-    (season.crates || []).forEach(c => items.push({ name: c.name, end: c.endDate, what: 'Loot Crate' }));
+  // "Ending soon" — 24 h before a battle pass, loot crate, season or banner ends.
+  // `items`: [{ game, what, name, end (ms) }]
+  function seasonNotifications(items, settings, now) {
     return items
       .map((it, i) => ({
         id: SEASON_ID_BASE + i,
+        game: it.game,
         title: `⏳ ${it.what} ending soon`,
-        body: `${it.name} ends ${formatAbsolute(Date.parse(it.end))}`,
-        at: Date.parse(it.end) - DAY_MS,
-        extra: { view: 'season' },
+        body: `${it.name} ends ${formatAbsolute(it.end)}`,
+        at: it.end - DAY_MS,
+        extra: { view: 'season', game: it.game },
       }))
-      .filter(n => n.at > now);
+      .filter(n => settings.seasonEnding[n.game] && n.at > now);
   }
 
   let pending = null;
   // Debounced: toggles fire in quick succession, only the last one matters
-  function reschedule(timers, season) {
+  function reschedule(timers, seasonItems) {
     clearTimeout(pending);
-    pending = setTimeout(() => doReschedule(timers, season).catch(err => console.warn('[alerts]', err)), 400);
+    pending = setTimeout(() => doReschedule(timers, seasonItems).catch(err => console.warn('[alerts]', err)), 400);
   }
 
-  async function doReschedule(timers, season) {
+  async function doReschedule(timers, seasonItems) {
     if (!native) return;
     const settings = loadSettings();
     const now      = Date.now();
-    const list     = [...timerNotifications(timers, settings, now), ...seasonNotifications(season, settings, now)];
+    const list     = [...timerNotifications(timers, settings, now), ...seasonNotifications(seasonItems, settings, now)];
 
     const { notifications: old } = await plugin.getPending();
     if (old.length) await plugin.cancel({ notifications: old.map(n => ({ id: n.id })) });

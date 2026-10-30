@@ -9,20 +9,27 @@ const DAY_MS  = 24 * HOUR_MS;
 //   next        — ms timestamp of the next start (strictly after now)
 //   activeUntil — ms timestamp the current run ends, or null when not active
 function timerState(timer, now = Date.now()) {
-  const anchor = Date.parse(timer.anchorUtc);
   const period = timer.periodHours * HOUR_MS;
-  const k      = Math.floor((now - anchor) / period);
-  const prev   = anchor + k * period;
-  const next   = prev + period;
-  const dur    = (timer.durationMin || 0) * 60000;
+  let next;
+  if (timer.localAnchorHour != null) {
+    // Phone-clock cycle, same as the website's nextLocalCycle()
+    const d = new Date(now);
+    d.setHours(timer.localAnchorHour % timer.periodHours, 0, 0, 0);
+    while (d.getTime() <= now) d.setHours(d.getHours() + timer.periodHours);
+    next = d.getTime();
+  } else {
+    const anchor = Date.parse(timer.anchorUtc);
+    next = anchor + (Math.floor((now - anchor) / period) + 1) * period;
+  }
+  const prev = next - period;
+  const dur  = (timer.durationMin || 0) * 60000;
   return { next, activeUntil: dur && now < prev + dur ? prev + dur : null };
 }
 
 // Every start time of `timer` in (from, to]
 function occurrences(timer, from, to) {
-  const out    = [];
-  const period = timer.periodHours * HOUR_MS;
-  for (let t = timerState(timer, from).next; t <= to; t += period) out.push(t);
+  const out = [];
+  for (let t = timerState(timer, from).next; t <= to; t = timerState(timer, t).next) out.push(t);
   return out;
 }
 

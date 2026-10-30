@@ -24,5 +24,5 @@ jobs:
         working-directory: android
       - uses: actions/upload-artifact@v4
         with:
-          name: lxw-once-human-debug-apk
+          name: lxw-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk

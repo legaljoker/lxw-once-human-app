@@ -1,0 +1,24 @@
+/* LxW — phone layout for once-human/interactive-map.html
+   Docks the Loot Finder / Eternal Hunt panels as a bottom sheet so the map
+   stays visible, and starts them collapsed on small screens.
+   Desktop is untouched (everything is inside the media query). */
+@media (max-width: 640px) {
+    .filter-panel,
+    .tracker-panel {
+        top: auto !important;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        left: 10px; right: 10px;
+        width: auto !important; min-width: 0 !important;
+        height: auto !important; min-height: 0 !important;
+        max-height: 55vh;
+        padding: 10px 12px;
+        border-radius: 14px;
+        box-shadow: 0 -6px 24px rgba(0, 0, 0, .55);
+    }
+    .filter-resize-handle,
+    .tracker-resize-handle { display: none !important; }
+    /* Coords readout overlaps the sheet; it isn't useful with touch anyway */
+    .coords-display { display: none !important; }
+    /* Bigger zoom buttons for fingers */
+    .leaflet-touch .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; font-size: 22px; }
+}

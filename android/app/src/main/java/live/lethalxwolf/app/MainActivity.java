@@ -1,4 +1,4 @@
-package live.lethalxwolf.oncehuman;
+package live.lethalxwolf.app;
 
 import com.getcapacitor.BridgeActivity;
 

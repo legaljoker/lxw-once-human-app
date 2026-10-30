@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <meta name="theme-color" content="#08070f" />
-  <title>LxW · Once Human</title>
+  <title>LxW</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/app.css" />
 </head>
-<body>
+<body data-game="oncehuman">
   <!-- ── Top bar ─────────────────────────────────────────── -->
   <header class="topbar">
     <button class="icon-btn" id="menuBtn" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
@@ -21,7 +21,7 @@
       <img src="img/logo.png" alt="" class="brand-logo" />
       <div class="brand-text">
         <span class="brand-name">LETHAL <span class="x">✕</span> WOLF</span>
-        <span class="brand-sub" id="topTitle">Once Human</span>
+        <span class="brand-sub" id="topTitle"></span>
       </div>
     </div>
     <div class="web-actions" id="webActions" hidden>
@@ -30,6 +30,14 @@
     </div>
   </header>
 
+  <!-- ── Game switch (Once Human / Aniimo) ──────────────── -->
+  <div class="game-bar" id="gameBar">
+    <div class="game-switch" role="radiogroup" aria-label="Game">
+      <button role="radio" data-game="oncehuman">Once Human</button>
+      <button role="radio" data-game="aniimo">Aniimo</button>
+    </div>
+  </div>
+
   <!-- ── Side menu ───────────────────────────────────────── -->
   <div class="scrim" id="scrim" hidden></div>
   <nav class="drawer" id="drawer" aria-label="Main menu" aria-hidden="true">
@@ -37,19 +45,24 @@
       <img src="img/logo.png" alt="LxW" class="drawer-logo" />
       <div>
         <div class="brand-name">LETHAL <span class="x">✕</span> WOLF</div>
-        <div class="drawer-sub">The Chaos Archives · Once Human</div>
+        <div class="drawer-sub">The Chaos Archives</div>
       </div>
     </div>
-    <div class="drawer-section">Live</div>
-    <button class="drawer-item" data-view="timers"><span>⚡</span> Event Timers</button>
-    <button class="drawer-item" data-view="season"><span>🌟</span> Battle Pass &amp; Loot Crates</button>
-    <button class="drawer-item" data-view="servers"><span>📅</span> Server Openings</button>
+    <div class="game-switch drawer-switch" role="radiogroup" aria-label="Game">
+      <button role="radio" data-game="oncehuman">Once Human</button>
+      <button role="radio" data-game="aniimo">Aniimo</button>
+    </div>
+    <div class="drawer-section" id="drawerLiveTitle">Live</div>
+    <div id="drawerLive"></div>
     <div class="drawer-section">Tools</div>
     <div id="drawerTools"></div>
     <div class="drawer-section">More</div>
-    <button class="drawer-item" data-web="hub"><span>🌐</span> Full Website</button>
+    <button class="drawer-item" data-view="creators"><span>🎥</span> Creators</button>
+    <button class="drawer-item" data-web="ravensjest"><span>🤖</span> RavensJest Discord Bot</button>
+    <button class="drawer-item" data-view="support"><span>💖</span> Support Us</button>
+    <button class="drawer-item" data-web="hub"><span>🌐</span> <span id="hubLabel">Full Website</span></button>
     <button class="drawer-item" data-view="settings"><span>🔔</span> Alert Settings &amp; About</button>
-    <p class="drawer-disclaimer">Unofficial fan app. Once Human and related content are property of Starry Studio / NetEase Games.</p>
+    <p class="drawer-disclaimer" id="drawerDisclaimer"></p>
   </nav>
 
   <!-- ── Views ───────────────────────────────────────────── -->
@@ -63,13 +76,10 @@
       <p class="hint">Tap <b>Alert</b> on any timer to get a phone notification before it hits, even when the app is closed. Change how early in <button class="link-btn" data-view="settings">Alert Settings</button>.</p>
     </section>
 
-    <section class="view" id="view-season" data-title="Battle Pass & Loot Crates" hidden>
-      <h2 class="section-title">🌟 Current Battle Pass</h2>
-      <div id="battlePass" class="season-slot"><div class="card loading">Loading…</div></div>
-      <h2 class="section-title">🎁 Current Loot Crates</h2>
-      <div id="lootCrates" class="season-slot"><div class="card loading">Loading…</div></div>
+    <section class="view" id="view-season" hidden>
+      <div id="seasonBody"></div>
       <label class="card toggle-row">
-        <span><b>Ending-soon alerts</b><br /><small>Notify me 24 hours before the battle pass or a loot crate ends.</small></span>
+        <span><b>Ending-soon alerts</b><br /><small id="seasonAlertHint"></small></span>
         <input type="checkbox" class="switch" id="seasonAlert" />
       </label>
     </section>
@@ -85,6 +95,25 @@
       <div class="tool-grid" id="toolGrid"></div>
     </section>
 
+    <section class="view" id="view-creators" data-title="The Creators" hidden>
+      <h2 class="section-title">🎥 The Creators</h2>
+      <p class="kicker">Follow the chaos → pick your platform</p>
+      <div id="creatorList"></div>
+      <h2 class="section-title">💬 Community</h2>
+      <div class="card" id="communityLinks"></div>
+    </section>
+
+    <section class="view" id="view-support" data-title="Support Us" hidden>
+      <div class="card support-card">
+        <div class="support-heart">💖</div>
+        <h2 class="support-title" id="supportTitle"></h2>
+        <div id="supportText"></div>
+        <div class="support-buttons" id="supportButtons"></div>
+        <p class="support-footnote" id="supportFootnote"></p>
+      </div>
+      <p class="hint center">Payments open securely in your browser.</p>
+    </section>
+
     <section class="view" id="view-settings" data-title="Alert Settings" hidden>
       <h2 class="section-title">🔔 Alert Settings</h2>
       <div class="card">
@@ -95,6 +124,7 @@
           <button data-lead="10">10 min</button>
           <button data-lead="15">15 min</button>
         </div>
+        <p class="muted">Applies to alerts for both games.</p>
       </div>
       <div class="card" id="exactCard" hidden>
         <b>Precise alarm timing is off</b>
@@ -107,8 +137,8 @@
       </div>
       <h2 class="section-title">ℹ️ About</h2>
       <div class="card about">
-        <p><b>LxW · Once Human</b> is the companion app for <a href="#" data-web="hub">lethalxwolf.live</a>. Tools, the battle pass, loot crates and timer schedules load straight from the website, so they stay up to date without app updates.</p>
-        <p class="muted">Unofficial fan app. Once Human and related content are property of Starry Studio / NetEase Games. Not affiliated with or endorsed by them.</p>
+        <p><b>LxW</b> is the companion app for <a href="#" data-web="main">lethalxwolf.live</a>, with Once Human and Aniimo tools. Pages, the battle pass, loot crates and timer schedules load straight from the website, so they stay up to date without app updates.</p>
+        <p class="muted">Unofficial fan app, not affiliated with or endorsed by the game publishers. Once Human and related content are property of Starry Studio / NetEase Games. Aniimo and related content are property of their respective owners.</p>
         <p class="muted" id="appVersion"></p>
       </div>
     </section>
@@ -124,13 +154,8 @@
     </section>
   </main>
 
-  <!-- ── Bottom navigation ───────────────────────────────── -->
-  <nav class="tabbar" aria-label="Sections">
-    <button class="tab active" data-view="timers"><span class="tab-ico">⏱️</span><span>Timers</span></button>
-    <button class="tab" data-view="tools"><span class="tab-ico">🛠️</span><span>Tools</span></button>
-    <button class="tab" data-view="servers"><span class="tab-ico">📅</span><span>Servers</span></button>
-    <button class="tab" data-view="season"><span class="tab-ico">🎁</span><span>BP &amp; Crates</span></button>
-  </nav>
+  <!-- ── Bottom navigation (tabs depend on the selected game) ── -->
+  <nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
 
   <script src="js/config.js"></script>
   <script src="js/schedule.js"></script>

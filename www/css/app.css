@@ -108,7 +108,7 @@ main {
 }
 .view-web { padding: 0; position: relative; overflow: hidden; }
 .view:not(.view-web)::after {
-  content: 'Unofficial fan app · Once Human © Starry Studio / NetEase Games';
+  content: var(--disclaimer, '');
   display: block; text-align: center; margin-top: 28px;
   font-size: .7rem; color: var(--text-muted);
 }
@@ -251,3 +251,73 @@ main {
   .tool-grid { grid-template-columns: 1fr; }
   .seg { grid-template-columns: 1fr 1fr; }
 }
+
+/* ---------- Game switch ---------- */
+:root { --gamebar-h: 52px; }
+.game-bar {
+  position: fixed; left: 0; right: 0; z-index: 19;
+  top: calc(var(--topbar-h) + var(--safe-top));
+  height: var(--gamebar-h); padding: 8px 14px;
+  background: rgba(8, 7, 15, .94);
+  border-bottom: 1px solid var(--border);
+  display: none;
+}
+body.show-gamebar .game-bar { display: block; }
+body.show-gamebar main { top: calc(var(--topbar-h) + var(--safe-top) + var(--gamebar-h)); }
+.game-switch {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 3px; height: 100%;
+  border-radius: 999px; background: #0e0c1c; border: 1px solid var(--border);
+}
+.game-switch button {
+  border-radius: 999px; font-family: var(--font-display); font-weight: 700; font-size: .88rem;
+  letter-spacing: .03em; color: var(--text-muted);
+}
+.game-switch button.active { background: rgba(52, 224, 196, .16); color: var(--accent-bright); box-shadow: inset 0 0 0 1px var(--accent-dim); }
+body[data-game="aniimo"] .game-switch button.active { background: rgba(255, 143, 200, .14); color: #ffb3da; box-shadow: inset 0 0 0 1px #c25d93; }
+.drawer-switch { height: 42px; margin: 14px 4px 2px; }
+
+/* Interactive maps: give them the whole screen below the top bar */
+body.immersive .tabbar { display: none; }
+body.immersive main { bottom: 0; }
+
+/* ---------- Timer extras ---------- */
+.timer-resets { grid-column: 1 / 4; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.timer-resets span {
+  font-size: .72rem; padding: 3px 8px; border-radius: 999px;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border); color: var(--text-label);
+}
+.kicker { font-family: var(--font-label); font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--text-muted); margin: -4px 2px 12px; }
+.center { text-align: center; }
+
+/* ---------- Creators ---------- */
+.creator-card { border-color: color-mix(in srgb, var(--creator) 35%, transparent); position: relative; overflow: hidden; }
+.creator-card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 2px; background: linear-gradient(90deg, var(--creator), transparent); }
+.creator-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.creator-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--creator); background: #120f22; }
+.creator-name { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
+.creator-role { font-family: var(--font-label); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--creator); margin-top: 2px; }
+.platforms { display: flex; flex-direction: column; gap: 8px; }
+.platform-link {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px;
+  background: rgba(0,0,0,.18); border: 1px solid var(--border); color: var(--text-primary); text-decoration: none;
+}
+.platform-link:active { border-color: rgba(255,255,255,.25); }
+.platform-link .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.platform-name { font-weight: 700; font-size: .9rem; }
+.platform-handle { margin-left: auto; color: var(--text-muted); font-size: .82rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-arrow { color: var(--creator, var(--accent-primary)); }
+
+/* ---------- Support ---------- */
+.support-card { text-align: center; padding: 24px 18px; }
+.support-heart {
+  width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem;
+  background: linear-gradient(135deg, #7c3aed, #34e0c4);
+}
+.support-title { font-family: var(--font-display); font-size: 1.3rem; margin: 0 0 12px; }
+#supportText p { color: var(--text-label); line-height: 1.6; margin: 0 0 12px; font-size: .92rem; }
+.support-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.support-btn { display: block; padding: 14px; border-radius: 12px; font-weight: 700; text-decoration: none; }
+.support-btn--primary { background: linear-gradient(90deg, #7c3aed, #34e0c4); color: #0b0918; }
+.support-btn--secondary { background: rgba(52,224,196,.08); border: 1px solid var(--accent-dim); color: var(--accent-bright); }
+.support-btn--tertiary { background: rgba(255,255,255,.03); border: 1px solid var(--border); color: var(--text-primary); }
+.support-footnote { font-size: .75rem; color: var(--text-muted); margin: 16px 0 0; }
