@@ -1,0 +1,30 @@
+{
+  "appId": "live.lethalxwolf.oncehuman",
+  "appName": "LxW Once Human",
+  "webDir": "www",
+  "backgroundColor": "#08070f",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "launchAutoHide": true,
+      "backgroundColor": "#08070f",
+      "showSpinner": false
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_lxw",
+      "iconColor": "#34e0c4"
+    }
+  },
+  "server": {
+    "allowNavigation": [
+      "lethalxwolf.live",
+      "*.lethalxwolf.live"
+    ]
+  }
+}

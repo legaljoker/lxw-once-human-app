@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LxW Once Human</string>
+    <string name="title_activity_main">LxW Once Human</string>
+    <string name="package_name">live.lethalxwolf.oncehuman</string>
+    <string name="custom_url_scheme">live.lethalxwolf.oncehuman</string>
+</resources>

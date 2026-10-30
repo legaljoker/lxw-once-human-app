@@ -1,0 +1,25 @@
+{
+  "name": "lxw-once-human",
+  "version": "1.0.0",
+  "description": "LxW Once Human companion app (unofficial fan app)",
+  "scripts": {
+    "sync": "cap sync android",
+    "build:apk": "cap sync android && cd android && ./gradlew assembleDebug",
+    "test": "node test/schedule.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0"
+  },
+  "private": true
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#08070f" />
+  <title>LxW · Once Human</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <!-- ── Top bar ─────────────────────────────────────────── -->
+  <header class="topbar">
+    <button class="icon-btn" id="menuBtn" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
+      <span class="burger"><span></span><span></span><span></span></span>
+    </button>
+    <div class="brand">
+      <img src="img/logo.png" alt="" class="brand-logo" />
+      <div class="brand-text">
+        <span class="brand-name">LETHAL <span class="x">✕</span> WOLF</span>
+        <span class="brand-sub" id="topTitle">Once Human</span>
+      </div>
+    </div>
+    <div class="web-actions" id="webActions" hidden>
+      <button class="icon-btn" id="webReload" aria-label="Reload page">⟳</button>
+      <button class="icon-btn" id="webExternal" aria-label="Open in browser">↗</button>
+    </div>
+  </header>
+
+  <!-- ── Side menu ───────────────────────────────────────── -->
+  <div class="scrim" id="scrim" hidden></div>
+  <nav class="drawer" id="drawer" aria-label="Main menu" aria-hidden="true">
+    <div class="drawer-head">
+      <img src="img/logo.png" alt="LxW" class="drawer-logo" />
+      <div>
+        <div class="brand-name">LETHAL <span class="x">✕</span> WOLF</div>
+        <div class="drawer-sub">The Chaos Archives · Once Human</div>
+      </div>
+    </div>
+    <div class="drawer-section">Live</div>
+    <button class="drawer-item" data-view="timers"><span>⚡</span> Event Timers</button>
+    <button class="drawer-item" data-view="season"><span>🌟</span> Battle Pass &amp; Loot Crates</button>
+    <button class="drawer-item" data-view="servers"><span>📅</span> Server Openings</button>
+    <div class="drawer-section">Tools</div>
+    <div id="drawerTools"></div>
+    <div class="drawer-section">More</div>
+    <button class="drawer-item" data-web="hub"><span>🌐</span> Full Website</button>
+    <button class="drawer-item" data-view="settings"><span>🔔</span> Alert Settings &amp; About</button>
+    <p class="drawer-disclaimer">Unofficial fan app. Once Human and related content are property of Starry Studio / NetEase Games.</p>
+  </nav>
+
+  <!-- ── Views ───────────────────────────────────────────── -->
+  <main id="main">
+    <section class="view" id="view-timers" data-title="Event Timers">
+      <div class="announcement" id="announcement" hidden></div>
+      <div class="notice" id="permNotice" hidden>
+        Notifications are turned off for LxW. <button class="link-btn" id="permFix">Allow notifications</button>
+      </div>
+      <div id="timerGroups"></div>
+      <p class="hint">Tap <b>Alert</b> on any timer to get a phone notification before it hits, even when the app is closed. Change how early in <button class="link-btn" data-view="settings">Alert Settings</button>.</p>
+    </section>
+
+    <section class="view" id="view-season" data-title="Battle Pass & Loot Crates" hidden>
+      <h2 class="section-title">🌟 Current Battle Pass</h2>
+      <div id="battlePass" class="season-slot"><div class="card loading">Loading…</div></div>
+      <h2 class="section-title">🎁 Current Loot Crates</h2>
+      <div id="lootCrates" class="season-slot"><div class="card loading">Loading…</div></div>
+      <label class="card toggle-row">
+        <span><b>Ending-soon alerts</b><br /><small>Notify me 24 hours before the battle pass or a loot crate ends.</small></span>
+        <input type="checkbox" class="switch" id="seasonAlert" />
+      </label>
+    </section>
+
+    <section class="view" id="view-servers" data-title="Server Openings" hidden>
+      <h2 class="section-title">📅 Server Opening Schedule</h2>
+      <p class="info" id="serverNote"></p>
+      <div id="serverGrid"></div>
+    </section>
+
+    <section class="view" id="view-tools" data-title="Tools & Guides" hidden>
+      <h2 class="section-title">🔗 Tools &amp; Guides</h2>
+      <div class="tool-grid" id="toolGrid"></div>
+    </section>
+
+    <section class="view" id="view-settings" data-title="Alert Settings" hidden>
+      <h2 class="section-title">🔔 Alert Settings</h2>
+      <div class="card">
+        <div class="field-label">Alert me</div>
+        <div class="seg" id="leadSeg" role="radiogroup" aria-label="How early to alert">
+          <button data-lead="0">At start</button>
+          <button data-lead="5">5 min before</button>
+          <button data-lead="10">10 min</button>
+          <button data-lead="15">15 min</button>
+        </div>
+      </div>
+      <div class="card" id="exactCard" hidden>
+        <b>Precise alarm timing is off</b>
+        <p class="muted">Android may delay alerts by several minutes. Turn on “Alarms &amp; reminders” for LxW so alerts land on time.</p>
+        <button class="btn" id="exactFix">Open Alarms &amp; reminders</button>
+      </div>
+      <div class="card">
+        <button class="btn" id="testAlert">Send a test alert</button>
+        <p class="muted" id="testResult"></p>
+      </div>
+      <h2 class="section-title">ℹ️ About</h2>
+      <div class="card about">
+        <p><b>LxW · Once Human</b> is the companion app for <a href="#" data-web="hub">lethalxwolf.live</a>. Tools, the battle pass, loot crates and timer schedules load straight from the website, so they stay up to date without app updates.</p>
+        <p class="muted">Unofficial fan app. Once Human and related content are property of Starry Studio / NetEase Games. Not affiliated with or endorsed by them.</p>
+        <p class="muted" id="appVersion"></p>
+      </div>
+    </section>
+
+    <section class="view view-web" id="view-web" hidden>
+      <div class="web-loading" id="webLoading"><div class="spinner"></div></div>
+      <div class="web-offline" id="webOffline" hidden>
+        <p>📡 You’re offline.</p>
+        <p class="muted">This page loads live from lethalxwolf.live. Reconnect and try again.</p>
+        <button class="btn" id="webRetry">Retry</button>
+      </div>
+      <div class="web-frame-wrap" id="webFrameWrap"></div>
+    </section>
+  </main>
+
+  <!-- ── Bottom navigation ───────────────────────────────── -->
+  <nav class="tabbar" aria-label="Sections">
+    <button class="tab active" data-view="timers"><span class="tab-ico">⏱️</span><span>Timers</span></button>
+    <button class="tab" data-view="tools"><span class="tab-ico">🛠️</span><span>Tools</span></button>
+    <button class="tab" data-view="servers"><span class="tab-ico">📅</span><span>Servers</span></button>
+    <button class="tab" data-view="season"><span class="tab-ico">🎁</span><span>BP &amp; Crates</span></button>
+  </nav>
+
+  <script src="js/config.js"></script>
+  <script src="js/schedule.js"></script>
+  <script src="js/notify.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
